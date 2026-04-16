@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="manifest.json">
+<title>Card Rewards</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{overflow-x:hidden}
+body{font-family:-apple-system,sans-serif;background:#1a1a2e;color:#eee;min-height:100vh;padding:12px 16px;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;overflow-x:hidden;max-width:100vw}
+h1{font-size:1.3rem;text-align:center;color:#e94560;margin-bottom:2px}
+.sub{text-align:center;color:#666;font-size:.75rem;margin-bottom:10px}
+.gear{position:absolute;top:14px;right:16px;font-size:1.4rem;cursor:pointer;color:#888}
+.gear:hover{color:#e94560}
+
+/* Search */
+.search-wrap{position:relative;margin-bottom:12px}
+.search{width:100%;padding:10px 36px 10px 14px;background:#16213e;border:2px solid #0f3460;border-radius:12px;color:#eee;font-size:1rem;outline:none}
+.search:focus{border-color:#e94560}
+.search::placeholder{color:#555}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#888;font-size:1.2rem;cursor:pointer;display:none;background:none;border:none;padding:4px}
+.search-clear.show{display:block}
+
+/* Category grid */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;max-width:100%}
+.cat-tile{position:relative;background:#16213e;border:2px solid #0f3460;border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s;overflow:hidden}
+.cat-tile.active{border-color:#e94560;background:#0f3460}
+.cat-icon{font-size:1.4rem;display:block}
+.cat-name{font-size:.75rem;margin-top:2px;color:#ccc}
+.cat-best{font-size:.65rem;color:#4ecca3;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.no-match{text-align:center;color:#555;font-size:.85rem;padding:20px;grid-column:1/-1}
+
+/* Pin button (shown in search results for unpinned categories) */
+.pin-btn{position:absolute;top:-4px;right:-4px;width:26px;height:26px;border-radius:50%;background:#e94560;color:#fff;border:none;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1}
+.pinned-badge{position:absolute;top:-4px;right:-4px;width:22px;height:22px;border-radius:50%;background:#4ecca3;color:#fff;font-size:.65rem;display:flex;align-items:center;justify-content:center;z-index:2}
+
+/* Context menu (bottom sheet for long press) */
+.ctx-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:200}
+.ctx-bg.show{display:block}
+.ctx-sheet{position:fixed;bottom:0;left:0;right:0;background:#16213e;border-radius:16px 16px 0 0;padding:20px 16px 30px;z-index:201;transform:translateY(100%);transition:transform .2s ease}
+.ctx-bg.show .ctx-sheet{transform:translateY(0)}
+.ctx-title{text-align:center;font-size:1rem;font-weight:600;color:#eee;margin-bottom:16px}
+.ctx-btns{display:flex;gap:10px;justify-content:center}
+.ctx-btn{flex:1;max-width:120px;padding:14px 8px;border:none;border-radius:12px;font-size:.85rem;cursor:pointer;font-weight:600;text-align:center}
+.ctx-move{background:#0f3460;color:#eee}
+.ctx-remove{background:#e94560;color:#fff}
+.ctx-cancel{background:#333;color:#ccc;margin-top:10px;display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:.95rem;cursor:pointer;font-weight:600;text-align:center}
+
+/* Results */
+.result-header{font-size:.85rem;color:#888;margin:10px 0 6px}
+.card-row{background:#16213e;border-radius:10px;padding:12px 14px;margin:6px 0;display:flex;justify-content:space-between;align-items:center}
+.card-row.top{border:2px solid #e94560}
+.card-info{flex:1;min-width:0;overflow:hidden}
+.card-name{font-weight:600;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-note{color:#888;font-size:.7rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-rate{font-size:1.2rem;font-weight:700;color:#e94560;margin-left:10px;white-space:nowrap}
+.card-unit{font-size:.8rem;font-weight:400;color:#aaa}
+
+/* Settings modal */
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:100;justify-content:center;align-items:flex-start;padding:40px 16px;overflow-y:auto}
+.modal-bg.show{display:flex}
+.modal{background:#16213e;border-radius:14px;padding:20px;width:100%;max-width:400px}
+.modal h2{font-size:1.1rem;color:#e94560;margin-bottom:16px;text-align:center}
+.setting-group{margin-bottom:16px}
+.setting-label{font-size:.8rem;color:#aaa;margin-bottom:4px}
+.setting-select{width:100%;padding:10px;background:#0f3460;color:#eee;border:1px solid #333;border-radius:8px;font-size:.9rem;-webkit-appearance:none;appearance:none}
+.setting-select option{background:#0f3460;color:#eee}
+.btn-row{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600}
+.btn-save{background:#e94560;color:#fff}
+.btn-cancel{background:#333;color:#ccc}
+.divider{border:none;border-top:1px solid #333;margin:14px 0}
+.section-title{font-size:.85rem;color:#e94560;font-weight:600;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<span class="gear" onclick="openSettings()">&#9881;</span>
+<h1>Card Rewards</h1>
+<div class="sub" id="quarterLabel"></div>
+
+<div class="search-wrap">
+  <input class="search" id="searchBox" type="text" placeholder="Search: uber, costco, netflix, tax..." autocomplete="off">
+  <button class="search-clear" id="searchClear" onclick="clearSearch()">&#10005;</button>
+</div>
+
+<div class="cat-grid" id="catGrid"></div>
+<div id="result"></div>
+
+<!-- Context Menu (bottom sheet for long press) -->
+<div class="ctx-bg" id="ctxBg" onclick="closeCtx()">
+<div class="ctx-sheet" onclick="event.stopPropagation()">
+  <div class="ctx-title" id="ctxTitle"></div>
+  <div class="ctx-btns">
+    <button class="ctx-btn ctx-move" onclick="movePinned(-1)">&laquo; Left</button>
+    <button class="ctx-btn ctx-remove" onclick="unpinFromCtx()">Unpin</button>
+    <button class="ctx-btn ctx-move" onclick="movePinned(1)">Right &raquo;</button>
+  </div>
+  <button class="ctx-cancel" onclick="closeCtx()">Cancel</button>
+</div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeSettings()">
+<div class="modal">
+<h2>Settings</h2>
+
+<div class="section-title">Bank of America</div>
+<div class="setting-group">
+  <div class="setting-label">Preferred Rewards Tier</div>
+  <select class="setting-select" id="set_boaTier">
+    <option value="none">None</option>
+    <option value="gold">Gold ($20K+)</option>
+    <option value="platinum">Platinum ($50K+)</option>
+    <option value="platinum_honors">Platinum Honors ($100K+)</option>
+  </select>
+</div>
+<div class="setting-group">
+  <div class="setting-label">Customized Cash — 3% Category</div>
+  <select class="setting-select" id="set_boaChoice">
+    <option value="gas">Gas & EV Charging</option>
+    <option value="online_shopping">Online Shopping (incl. streaming, phone plans)</option>
+    <option value="dining">Dining</option>
+    <option value="travel">Travel</option>
+    <option value="drugstores">Drug Stores & Pharmacies</option>
+    <option value="home_improvement">Home Improvement & Furnishings</option>
+  </select>
+</div>
+
+<hr class="divider">
+<div class="section-title">US Bank Smartly</div>
+<div class="setting-group">
+  <div class="setting-label">Checking Account Balance</div>
+  <select class="setting-select" id="set_smartlyTier">
+    <option value="0">Under $10,000 (2%)</option>
+    <option value="1">$10K – $50K (2.5%)</option>
+    <option value="2">$50K – $100K (3%)</option>
+    <option value="3">$100K+ (4%)</option>
+  </select>
+</div>
+
+<hr class="divider">
+<div class="section-title">US Bank Cash+</div>
+<div class="setting-group">
+  <div class="setting-label">5% Category #1</div>
+  <select class="setting-select" id="set_cp5a"></select>
+</div>
+<div class="setting-group">
+  <div class="setting-label">5% Category #2</div>
+  <select class="setting-select" id="set_cp5b"></select>
+</div>
+<div class="setting-group">
+  <div class="setting-label">2% Category</div>
+  <select class="setting-select" id="set_cp2">
+    <option value="groceries">Grocery Stores</option>
+    <option value="gas">Gas Stations & EV Charging</option>
+    <option value="dining">Restaurants</option>
+  </select>
+</div>
+
+<div class="btn-row">
+  <button class="btn btn-cancel" onclick="closeSettings()">Cancel</button>
+  <button class="btn btn-save" onclick="saveSettings()">Save</button>
+</div>
+</div>
+</div>
+
+<script>
+/*=====================================================================
+  DATA — UPDATE QUARTERLY
+  Last updated: 2026-04-15
+=====================================================================*/
+var DATA_UPDATED = "2026-04-15";
+var CURRENT_QUARTER = "Q2 2026 (Apr\u2013Jun)";
+
+// Discover it — Q2 2026 rotating 5% categories
+var DISCOVER_ROTATING = ["dining", "home_improvement"];
+
+// Chase Freedom / Freedom Flex — Q2 2026 rotating 5%
+var CHASE_ROTATING_MAP = {
+  amazon: {note:"Q2 rotating \u00b7 $1,500/qtr"},
+  online_shopping: {note:"Q2 rotating \u00b7 Amazon only \u00b7 $1,500/qtr"},
+  groceries: {note:"Q2 rotating \u00b7 Whole Foods only \u00b7 $1,500/qtr"},
+  travel: {note:"Q2 rotating \u00b7 Chase Travel only \u00b7 $1,500/qtr"},
+  hotels: {note:"Q2 rotating \u00b7 Chase Travel only \u00b7 $1,500/qtr"},
+};
+
+/*=====================================================================
+  CATEGORIES
+=====================================================================*/
+var CATEGORIES = [
+  {id:"dining",      name:"Dining",         icon:"\uD83C\uDF7D\uFE0F", kw:["restaurant","eat","dine","food","takeout","delivery","doordash","grubhub","ubereats"]},
+  {id:"fast_food",   name:"Fast Food",      icon:"\uD83C\uDF54",  kw:["mcdonalds","burger","wendys","taco bell","chipotle","chick-fil-a","kfc","subway","popeyes","five guys"]},
+  {id:"coffee",      name:"Coffee",         icon:"\u2615",  kw:["starbucks","dunkin","cafe","latte","peets","dutch bros","espresso"]},
+  {id:"groceries",   name:"Groceries",      icon:"\uD83D\uDED2",  kw:["supermarket","grocery","trader joes","kroger","safeway","albertsons","publix","heb","aldi","sprouts"]},
+  {id:"wholesale",   name:"Wholesale",      icon:"\uD83C\uDFEA",  kw:["costco","sams club","bjs","bulk","warehouse"]},
+  {id:"gas",         name:"Gas",            icon:"\u26FD",  kw:["fuel","gasoline","ev charging","shell","chevron","exxon","bp","electric vehicle","chargepoint"]},
+  {id:"rideshare",   name:"Rideshare",      icon:"\uD83D\uDE95",  kw:["uber","lyft","taxi","cab","ride","rideshare"]},
+  {id:"travel",      name:"Travel",         icon:"\u2708\uFE0F",  kw:["flight","airline","vacation","booking","airfare","delta","united","southwest","american airlines","expedia","rental car"]},
+  {id:"hotels",      name:"Hotels",         icon:"\uD83C\uDFE8",  kw:["hotel","motel","airbnb","marriott","hilton","lodging","vrbo","hyatt","ihg"]},
+  {id:"amazon",      name:"Amazon",         icon:"\uD83D\uDCE6",  kw:["amazon","prime","whole foods","aws"]},
+  {id:"online_shopping", name:"Online Shop", icon:"\uD83D\uDECD\uFE0F", kw:["online","ebay","etsy","walmart.com","target.com","shopping","wayfair","newegg"]},
+  {id:"streaming",   name:"Streaming",      icon:"\uD83D\uDCFA",  kw:["netflix","hulu","disney","spotify","youtube","apple tv","hbo","max","peacock","paramount","music"]},
+  {id:"drugstores",  name:"Drugstores",     icon:"\uD83D\uDC8A",  kw:["pharmacy","cvs","walgreens","rite aid","medicine","rx","prescription"]},
+  {id:"home_improvement", name:"Home Improv", icon:"\uD83D\uDD28", kw:["lowes","home depot","hardware","renovation","repair","menards","ace"]},
+  {id:"electronics", name:"Electronics",    icon:"\uD83D\uDDA5\uFE0F", kw:["best buy","apple store","tech","computer","phone store","micro center","b&h"]},
+  {id:"cell_phone",  name:"Cell Phone",     icon:"\uD83D\uDCF1",  kw:["phone bill","tmobile","t-mobile","verizon","att","at&t","wireless","mobile","sprint","mint"]},
+  {id:"utilities",   name:"Utilities",      icon:"\uD83D\uDCA1",  kw:["electric","water","power","internet","cable","sewer","garbage","gas bill","pse","comcast","xfinity"]},
+  {id:"gym",         name:"Gym/Fitness",    icon:"\uD83C\uDFCB\uFE0F", kw:["gym","fitness","workout","planet fitness","la fitness","peloton","ymca","crossfit","equinox"]},
+  {id:"entertainment", name:"Entertainment", icon:"\uD83C\uDFAC", kw:["movie","concert","show","theater","amc","regal","tickets","event","live nation","ticketmaster"]},
+  {id:"department",  name:"Dept Stores",    icon:"\uD83C\uDFEC",  kw:["macys","nordstrom","jcpenney","kohls","target","sears","bloomingdales","dillards"]},
+  {id:"clothing",    name:"Clothing",       icon:"\uD83D\uDC55",  kw:["clothes","apparel","gap","old navy","zara","h&m","nike","shoes","adidas","uniqlo","ross","tj maxx"]},
+  {id:"furniture",   name:"Furniture",      icon:"\uD83D\uDECB\uFE0F", kw:["ikea","furniture","couch","sofa","mattress","bed","wayfair","ashley","crate and barrel","pottery barn"]},
+  {id:"parking",     name:"Parking/Tolls",  icon:"\uD83C\uDD7F\uFE0F", kw:["parking","toll","meter","garage","spothero","parkwhiz"]},
+  {id:"tax",         name:"Tax",            icon:"\uD83C\uDFDB\uFE0F", kw:["tax","irs","income tax","property tax","tax payment","pay1040","eftps","federal tax","state tax"]},
+  {id:"paypal",      name:"PayPal",         icon:"\uD83D\uDCB2",  kw:["paypal","venmo"]},
+  {id:"other",       name:"Other",          icon:"\uD83D\uDCB3",  kw:["everything else","miscellaneous","general"]},
+];
+
+var CAT_MAP = {};
+CATEGORIES.forEach(function(c) { CAT_MAP[c.id] = c; });
+
+/*=====================================================================
+  US BANK CASH+ 5% OPTIONS
+=====================================================================*/
+var CASHPLUS_5_OPTIONS = [
+  {value:"fast_food",     label:"Fast Food",                 mapCat:"fast_food"},
+  {value:"electronics",   label:"Electronics Stores",        mapCat:"electronics"},
+  {value:"streaming",     label:"TV, Internet & Streaming",  mapCat:"streaming"},
+  {value:"utilities",     label:"Home Utilities",            mapCat:"utilities"},
+  {value:"cell_phone",    label:"Cell Phone Providers",      mapCat:"cell_phone"},
+  {value:"furniture",     label:"Furniture Stores",          mapCat:"furniture"},
+  {value:"department",    label:"Department Stores",         mapCat:"department"},
+  {value:"transportation",label:"Ground Transportation",     mapCat:"rideshare"},
+  {value:"gyms",          label:"Gyms & Fitness",            mapCat:"gym"},
+  {value:"clothing",      label:"Select Clothing Stores",    mapCat:"clothing"},
+  {value:"sporting",      label:"Sporting Goods Stores",     mapCat:"other"},
+  {value:"movies",        label:"Movie Theaters",            mapCat:"entertainment"},
+];
+
+var BOA_MULTIPLIER = {none:1, gold:1.25, platinum:1.5, platinum_honors:1.75};
+var SMARTLY_RATES = [2, 2.5, 3, 4];
+
+/*=====================================================================
+  SETTINGS (includes pinned categories)
+=====================================================================*/
+var DEFAULT_PINS = ["dining","groceries","gas","travel","rideshare","amazon","streaming","online_shopping","drugstores","coffee","home_improvement","other"];
+
+var DEFAULT_SETTINGS = {
+  boaTier: "none",
+  boaChoice: "gas",
+  smartlyTier: "0",
+  cp5a: "streaming",
+  cp5b: "utilities",
+  cp2: "groceries",
+  pinnedCats: DEFAULT_PINS.slice(),
+};
+
+function loadSettings() {
+  try {
+    var s = JSON.parse(localStorage.getItem("cardRewardsSettings"));
+    if (s) {
+      if (!s.pinnedCats) s.pinnedCats = DEFAULT_PINS.slice();
+      return Object.assign({}, DEFAULT_SETTINGS, s);
+    }
+  } catch(e) {}
+  return Object.assign({}, DEFAULT_SETTINGS, {pinnedCats: DEFAULT_PINS.slice()});
+}
+
+function persistSettings(s) {
+  try { localStorage.setItem("cardRewardsSettings", JSON.stringify(s)); } catch(e) {}
+}
+
+var settings = loadSettings();
+
+/*=====================================================================
+  CATEGORY GROUPING
+=====================================================================*/
+function effectiveCat(catId) {
+  var map = {fast_food:"dining", coffee:"dining", wholesale:"groceries", rideshare:"travel", hotels:"travel", parking:"travel", amazon:"online_shopping", furniture:"home_improvement"};
+  return map[catId] || catId;
+}
+
+/*=====================================================================
+  RATE COMPUTATION
+=====================================================================*/
+function getRate(cardId, catId, s) {
+  var eCat = effectiveCat(catId);
+
+  switch(cardId) {
+    case "discover": {
+      var isR = DISCOVER_ROTATING.includes(eCat);
+      return {rate: isR ? 5 : 1, unit:"%", note: isR ? "Q2 rotating \u00b7 $1,500/qtr cap" : ""};
+    }
+    case "chase_freedom": {
+      var rot = CHASE_ROTATING_MAP[catId];
+      if (rot) return {rate:5, unit:"%", note:rot.note};
+      return {rate:1, unit:"%", note:""};
+    }
+    case "chase_freedom_flex": {
+      var rot2 = CHASE_ROTATING_MAP[catId];
+      if (rot2) return {rate:5, unit:"%", note:rot2.note};
+      if (eCat === "dining") return {rate:3, unit:"%", note:""};
+      if (catId === "drugstores") return {rate:3, unit:"%", note:""};
+      return {rate:1, unit:"%", note:""};
+    }
+    case "chase_sapphire": {
+      if (catId === "rideshare") return {rate:5, unit:"x pts", note:"Lyft 5x (thru 9/2027) \u00b7 Uber ~2x"};
+      if (eCat === "dining") return {rate:3, unit:"x pts", note:""};
+      if (catId === "streaming") return {rate:3, unit:"x pts", note:""};
+      if (catId === "groceries") return {rate:3, unit:"x pts", note:"Online grocery only"};
+      if (eCat === "travel") return {rate:2, unit:"x pts", note:"5x via Chase Travel portal"};
+      return {rate:1, unit:"x pts", note:""};
+    }
+    case "boa_customized": {
+      var m = BOA_MULTIPLIER[s.boaTier];
+      var base = 1;
+      if (catId === s.boaChoice || eCat === s.boaChoice) base = 3;
+      else if (catId === "groceries" || catId === "wholesale") base = 2;
+      var rate = Math.round(base * m * 100) / 100;
+      var note = s.boaTier !== "none" ? s.boaTier.replace(/_/g," ") + " tier" : "";
+      if (base >= 2) note += (note ? " \u00b7 " : "") + "$2,500/qtr cap";
+      return {rate:rate, unit:"%", note:note};
+    }
+    case "boa_unlimited": {
+      var m2 = BOA_MULTIPLIER[s.boaTier];
+      var r = Math.round(1.5 * m2 * 100) / 100;
+      return {rate:r, unit:"%", note: s.boaTier !== "none" ? s.boaTier.replace(/_/g," ") + " tier" : ""};
+    }
+    case "usb_smartly": {
+      var rate2 = SMARTLY_RATES[parseInt(s.smartlyTier)];
+      if (catId === "tax") return {rate:2, unit:"%", note:"Tax excluded from bonus rate"};
+      return {rate:rate2, unit:"%", note: rate2 > 2 ? "$10K/cycle cap at bonus rate" : ""};
+    }
+    case "usb_cashplus": {
+      var o5a = CASHPLUS_5_OPTIONS.find(function(o){return o.value===s.cp5a;});
+      var o5b = CASHPLUS_5_OPTIONS.find(function(o){return o.value===s.cp5b;});
+      var rt = 1, nt = "";
+      if (o5a && o5a.mapCat === catId) { rt = 5; nt = "$2,000/qtr cap"; }
+      if (o5b && o5b.mapCat === catId && rt < 5) { rt = 5; nt = "$2,000/qtr cap"; }
+      if (rt < 5) {
+        var cp2 = s.cp2;
+        if (cp2 === catId) rt = 2;
+        else if (cp2 === "dining" && (catId==="dining"||catId==="fast_food"||catId==="coffee")) rt = 2;
+      }
+      return {rate:rt, unit:"%", note:nt};
+    }
+    case "paypal": {
+      return catId === "paypal" ? {rate:3, unit:"%", note:"Via PayPal checkout"} : {rate:2, unit:"%", note:""};
+    }
+    default: return {rate:0, unit:"%", note:""};
+  }
+}
+
+/*=====================================================================
+  CARD DEFINITIONS
+=====================================================================*/
+var CARDS = [
+  {id:"discover",          name:"Discover it",                fee:0},
+  {id:"chase_freedom",     name:"Chase Freedom",              fee:0},
+  {id:"chase_freedom_flex",name:"Chase Freedom Flex",         fee:0},
+  {id:"chase_sapphire",    name:"Chase Sapphire Preferred",   fee:95},
+  {id:"boa_customized",    name:"BOA Customized Cash",        fee:0},
+  {id:"boa_unlimited",     name:"BOA Unlimited Cash",         fee:0},
+  {id:"usb_smartly",       name:"US Bank Smartly",            fee:0},
+  {id:"usb_cashplus",      name:"US Bank Cash+",              fee:0},
+  {id:"paypal",            name:"PayPal Cashback",            fee:0},
+];
+
+/*=====================================================================
+  PIN MANAGEMENT
+=====================================================================*/
+function pinCat(catId) {
+  if (settings.pinnedCats.indexOf(catId) === -1) {
+    settings.pinnedCats.push(catId);
+    persistSettings(settings);
+    render();
+  }
+}
+
+function unpinCat(catId) {
+  var idx = settings.pinnedCats.indexOf(catId);
+  if (idx !== -1) {
+    settings.pinnedCats.splice(idx, 1);
+    persistSettings(settings);
+  }
+}
+
+function movePinned(dir) {
+  if (!ctxCatId) return;
+  var arr = settings.pinnedCats;
+  var idx = arr.indexOf(ctxCatId);
+  if (idx < 0) return;
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  var tmp = arr[idx];
+  arr[idx] = arr[newIdx];
+  arr[newIdx] = tmp;
+  persistSettings(settings);
+  render();
+}
+
+function unpinFromCtx() {
+  if (!ctxCatId) return;
+  unpinCat(ctxCatId);
+  closeCtx();
+  render();
+}
+
+/*=====================================================================
+  CONTEXT MENU (long press)
+=====================================================================*/
+var ctxCatId = null;
+var longPressTimer = null;
+var wasLongPress = false;
+var touchHandled = false;
+
+function showCtx(catId) {
+  ctxCatId = catId;
+  var cat = CAT_MAP[catId];
+  document.getElementById("ctxTitle").textContent = cat ? (cat.icon + " " + cat.name) : catId;
+  document.getElementById("ctxBg").classList.add("show");
+}
+
+function closeCtx() {
+  ctxCatId = null;
+  document.getElementById("ctxBg").classList.remove("show");
+}
+
+/*=====================================================================
+  SEARCH
+=====================================================================*/
+var searchBox = document.getElementById("searchBox");
+var searchClear = document.getElementById("searchClear");
+
+function matchCategory(cat, query) {
+  if (!query) return true;
+  var q = query.toLowerCase();
+  if (cat.name.toLowerCase().indexOf(q) !== -1) return true;
+  if (cat.id.replace(/_/g," ").indexOf(q) !== -1) return true;
+  for (var i = 0; i < cat.kw.length; i++) {
+    if (cat.kw[i].indexOf(q) !== -1) return true;
+  }
+  return false;
+}
+
+searchBox.addEventListener("input", function() {
+  searchClear.classList.toggle("show", searchBox.value.length > 0);
+  activeCat = null;
+  render();
+});
+
+function clearSearch() {
+  searchBox.value = "";
+  searchClear.classList.remove("show");
+  activeCat = null;
+  render();
+  searchBox.focus();
+}
+
+/*=====================================================================
+  UI RENDERING
+=====================================================================*/
+var catGrid = document.getElementById("catGrid");
+var resDiv = document.getElementById("result");
+var activeCat = null;
+
+function render() {
+  document.getElementById("quarterLabel").textContent = CURRENT_QUARTER + " \u00b7 Updated " + DATA_UPDATED;
+  var query = searchBox.value.trim();
+  var isSearch = query.length > 0;
+  var catsToShow;
+
+  if (isSearch) {
+    // Search mode: show ALL matching categories
+    catsToShow = CATEGORIES.filter(function(c) { return matchCategory(c, query); });
+  } else {
+    // Home mode: show only pinned categories (in order)
+    catsToShow = [];
+    settings.pinnedCats.forEach(function(id) {
+      var c = CAT_MAP[id];
+      if (c) catsToShow.push(c);
+    });
+  }
+
+  catGrid.innerHTML = "";
+  if (catsToShow.length === 0) {
+    catGrid.innerHTML = '<div class="no-match">' + (isSearch ? "No matching category" : "No pinned categories \u2014 search to add") + '</div>';
+  } else {
+    catsToShow.forEach(function(cat) {
+      var rankings = getRankings(cat.id);
+      var best = rankings[0];
+      var tile = document.createElement("div");
+      tile.className = "cat-tile" + (activeCat === cat.id ? " active" : "");
+      var shortName = best.name.length > 12 ? best.name.split(" ").slice(0,2).join(" ") : best.name;
+      tile.innerHTML = '<span class="cat-icon">' + cat.icon + '</span><div class="cat-name">' + cat.name + '</div><div class="cat-best">' + shortName + " " + best.rate + best.unit + '</div>';
+
+      var isPinned = settings.pinnedCats.indexOf(cat.id) !== -1;
+
+      if (isSearch && !isPinned) {
+        // Show + pin button
+        var pinBtn = document.createElement("button");
+        pinBtn.className = "pin-btn";
+        pinBtn.textContent = "+";
+        pinBtn.setAttribute("data-cat", cat.id);
+        pinBtn.addEventListener("click", function(e) {
+          e.stopPropagation();
+          pinCat(this.getAttribute("data-cat"));
+        });
+        tile.appendChild(pinBtn);
+      } else if (isSearch && isPinned) {
+        // Show pinned badge
+        var badge = document.createElement("span");
+        badge.className = "pinned-badge";
+        badge.textContent = "\u2713";
+        tile.appendChild(badge);
+      }
+
+      // Click handler
+      tile.setAttribute("data-cat", cat.id);
+
+      if (!isSearch) {
+        // Home mode: support long press for reorder/unpin
+        (function(cid, tileEl) {
+          tileEl.addEventListener("touchstart", function(e) {
+            wasLongPress = false;
+            longPressTimer = setTimeout(function() {
+              wasLongPress = true;
+              showCtx(cid);
+            }, 500);
+          }, {passive:true});
+          tileEl.addEventListener("touchend", function(e) {
+            clearTimeout(longPressTimer);
+            if (!wasLongPress) {
+              touchHandled = true;
+              activeCat = (activeCat === cid) ? null : cid;
+              render();
+              setTimeout(function() { touchHandled = false; }, 300);
+            }
+          });
+          tileEl.addEventListener("touchmove", function() {
+            clearTimeout(longPressTimer);
+          }, {passive:true});
+          // Desktop: right-click for context menu
+          tileEl.addEventListener("contextmenu", function(e) {
+            e.preventDefault();
+            showCtx(cid);
+          });
+          // Desktop: left click (skipped if touch already handled)
+          tileEl.addEventListener("click", function(e) {
+            if (touchHandled) return;
+            if (e.button === 0 && !wasLongPress) {
+              activeCat = (activeCat === cid) ? null : cid;
+              render();
+            }
+          });
+        })(cat.id, tile);
+      } else {
+        // Search mode: simple click
+        (function(cid, tileEl) {
+          tileEl.addEventListener("click", function() {
+            activeCat = (activeCat === cid) ? null : cid;
+            render();
+          });
+        })(cat.id, tile);
+      }
+
+      catGrid.appendChild(tile);
+    });
+  }
+
+  // Auto-select if search narrows to 1 result
+  if (catsToShow.length === 1 && isSearch) {
+    activeCat = catsToShow[0].id;
+  }
+
+  if (activeCat && catsToShow.some(function(c) { return c.id === activeCat; })) {
+    renderResults(activeCat);
+  } else {
+    resDiv.innerHTML = "";
+  }
+}
+
+function getRankings(catId) {
+  return CARDS.map(function(c) {
+    var r = getRate(c.id, catId, settings);
+    return {name:c.name, rate:r.rate, unit:r.unit, note:r.note, fee:c.fee};
+  }).sort(function(a,b) { return b.rate - a.rate || a.fee - b.fee; });
+}
+
+function renderResults(catId) {
+  var cat = CAT_MAP[catId];
+  var rankings = getRankings(catId);
+  resDiv.innerHTML = '<div class="result-header">' + cat.icon + " " + cat.name + " \u2014 ranked by reward rate</div>" +
+    rankings.map(function(c, i) {
+      return '<div class="card-row' + (i===0?' top':'') + '">' +
+        '<div class="card-info">' +
+          '<div class="card-name">' + (i===0?'\uD83D\uDC51 ':'') + c.name + '</div>' +
+          (c.note ? '<div class="card-note">' + c.note + '</div>' : '') +
+        '</div>' +
+        '<div class="card-rate">' + c.rate + '<span class="card-unit">' + c.unit + '</span></div>' +
+      '</div>';
+    }).join("");
+}
+
+/*=====================================================================
+  SETTINGS UI
+=====================================================================*/
+function populateCashPlusOptions() {
+  ["set_cp5a","set_cp5b"].forEach(function(id) {
+    var sel = document.getElementById(id);
+    sel.innerHTML = "";
+    CASHPLUS_5_OPTIONS.forEach(function(o) {
+      var opt = document.createElement("option");
+      opt.value = o.value; opt.textContent = o.label;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function openSettings() {
+  populateCashPlusOptions();
+  document.getElementById("set_boaTier").value = settings.boaTier;
+  document.getElementById("set_boaChoice").value = settings.boaChoice;
+  document.getElementById("set_smartlyTier").value = settings.smartlyTier;
+  document.getElementById("set_cp5a").value = settings.cp5a;
+  document.getElementById("set_cp5b").value = settings.cp5b;
+  document.getElementById("set_cp2").value = settings.cp2;
+  document.getElementById("modalBg").classList.add("show");
+}
+
+function closeSettings() {
+  document.getElementById("modalBg").classList.remove("show");
+}
+
+function saveSettings() {
+  settings.boaTier = document.getElementById("set_boaTier").value;
+  settings.boaChoice = document.getElementById("set_boaChoice").value;
+  settings.smartlyTier = document.getElementById("set_smartlyTier").value;
+  settings.cp5a = document.getElementById("set_cp5a").value;
+  settings.cp5b = document.getElementById("set_cp5b").value;
+  settings.cp2 = document.getElementById("set_cp2").value;
+  persistSettings(settings);
+  closeSettings();
+  render();
+}
+
+/*=====================================================================
+  INIT
+=====================================================================*/
+render();
+</script>
+</body>
+</html>
