@@ -172,21 +172,21 @@ h1{font-size:1.3rem;text-align:center;color:#e94560;margin-bottom:2px}
 <script>
 /*=====================================================================
   DATA — UPDATE QUARTERLY
-  Last updated: 2026-04-15
+  Last updated: 2026-07-01
 =====================================================================*/
-var DATA_UPDATED = "2026-04-15";
-var CURRENT_QUARTER = "Q2 2026 (Apr\u2013Jun)";
+var DATA_UPDATED = "2026-07-01";
+var CURRENT_QUARTER = "Q3 2026 (Jul\u2013Sep)";
 
-// Discover it — Q2 2026 rotating 5% categories
-var DISCOVER_ROTATING = ["dining", "home_improvement"];
+// Discover it — Q3 2026 rotating 5% categories
+var DISCOVER_ROTATING = ["gas", "transit", "travel", "rideshare", "parking", "drugstores"];
 
-// Chase Freedom / Freedom Flex — Q2 2026 rotating 5%
+// Chase Freedom / Freedom Flex — Q3 2026 rotating 5%
 var CHASE_ROTATING_MAP = {
-  amazon: {note:"Q2 rotating \u00b7 $1,500/qtr"},
-  online_shopping: {note:"Q2 rotating \u00b7 Amazon only \u00b7 $1,500/qtr"},
-  groceries: {note:"Q2 rotating \u00b7 Whole Foods only \u00b7 $1,500/qtr"},
-  travel: {note:"Q2 rotating \u00b7 Chase Travel only \u00b7 $1,500/qtr"},
-  hotels: {note:"Q2 rotating \u00b7 Chase Travel only \u00b7 $1,500/qtr"},
+  gas: {note:"Q3 rotating \u00b7 gas/EV charging \u00b7 $1,500/qtr"},
+  transit: {note:"Q3 rotating \u00b7 public transit \u00b7 $1,500/qtr"},
+  parking: {note:"Q3 rotating \u00b7 transit/tolls/parking \u00b7 $1,500/qtr"},
+  entertainment: {note:"Q3 rotating \u00b7 select live entertainment \u00b7 $1,500/qtr"},
+  united_way: {note:"Q3 rotating \u00b7 United Way donations only \u00b7 $1,500/qtr"},
 };
 
 /*=====================================================================
@@ -200,6 +200,7 @@ var CATEGORIES = [
   {id:"wholesale",   name:"Wholesale",      icon:"\uD83C\uDFEA",  kw:["costco","sams club","bjs","bulk","warehouse"]},
   {id:"gas",         name:"Gas",            icon:"\u26FD",  kw:["fuel","gasoline","ev charging","shell","chevron","exxon","bp","electric vehicle","chargepoint"]},
   {id:"rideshare",   name:"Rideshare",      icon:"\uD83D\uDE95",  kw:["uber","lyft","taxi","cab","ride","rideshare"]},
+  {id:"transit",     name:"Transit",        icon:"\uD83D\uDE86",  kw:["transit","public transit","train","bus","ferry","subway","metro","light rail","amtrak","sound transit","orca","clipper","omny","commute"]},
   {id:"travel",      name:"Travel",         icon:"\u2708\uFE0F",  kw:["flight","airline","vacation","booking","airfare","delta","united","southwest","american airlines","expedia","rental car"]},
   {id:"hotels",      name:"Hotels",         icon:"\uD83C\uDFE8",  kw:["hotel","motel","airbnb","marriott","hilton","lodging","vrbo","hyatt","ihg"]},
   {id:"amazon",      name:"Amazon",         icon:"\uD83D\uDCE6",  kw:["amazon","prime","whole foods","aws"]},
@@ -217,6 +218,7 @@ var CATEGORIES = [
   {id:"furniture",   name:"Furniture",      icon:"\uD83D\uDECB\uFE0F", kw:["ikea","furniture","couch","sofa","mattress","bed","wayfair","ashley","crate and barrel","pottery barn"]},
   {id:"parking",     name:"Parking/Tolls",  icon:"\uD83C\uDD7F\uFE0F", kw:["parking","toll","meter","garage","spothero","parkwhiz"]},
   {id:"tax",         name:"Tax",            icon:"\uD83C\uDFDB\uFE0F", kw:["tax","irs","income tax","property tax","tax payment","pay1040","eftps","federal tax","state tax"]},
+  {id:"united_way",  name:"United Way",      icon:"\u2764\uFE0F", kw:["united way","charity","donation","donate","nonprofit","non-profit"]},
   {id:"paypal",      name:"PayPal",         icon:"\uD83D\uDCB2",  kw:["paypal","venmo"]},
   {id:"other",       name:"Other",          icon:"\uD83D\uDCB3",  kw:["everything else","miscellaneous","general"]},
 ];
@@ -248,7 +250,7 @@ var SMARTLY_RATES = [2, 2.5, 3, 4];
 /*=====================================================================
   SETTINGS (includes pinned categories)
 =====================================================================*/
-var DEFAULT_PINS = ["dining","groceries","gas","travel","rideshare","amazon","streaming","online_shopping","drugstores","coffee","home_improvement","other"];
+var DEFAULT_PINS = ["dining","groceries","gas","transit","travel","rideshare","amazon","streaming","online_shopping","drugstores","entertainment","coffee","home_improvement","united_way","other"];
 
 var DEFAULT_SETTINGS = {
   boaTier: "none",
@@ -293,8 +295,8 @@ function getRate(cardId, catId, s) {
 
   switch(cardId) {
     case "discover": {
-      var isR = DISCOVER_ROTATING.includes(eCat);
-      return {rate: isR ? 5 : 1, unit:"%", note: isR ? "Q2 rotating \u00b7 $1,500/qtr cap" : ""};
+      var isR = DISCOVER_ROTATING.includes(catId);
+      return {rate: isR ? 5 : 1, unit:"%", note: isR ? "Q3 rotating \u00b7 gas/transport/drugstores \u00b7 $1,500/qtr cap" : ""};
     }
     case "chase_freedom": {
       var rot = CHASE_ROTATING_MAP[catId];
