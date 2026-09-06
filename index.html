@@ -111,12 +111,16 @@ h1{font-size:1.3rem;text-align:center;color:#e94560;margin-bottom:2px}
 
 <div class="section-title">Bank of America</div>
 <div class="setting-group">
-  <div class="setting-label">Preferred Rewards Tier</div>
+  <div class="setting-label">BofA Rewards Tier</div>
   <select class="setting-select" id="set_boaTier">
-    <option value="none">None</option>
-    <option value="gold">Gold ($20K+)</option>
-    <option value="platinum">Platinum ($50K+)</option>
-    <option value="platinum_honors">Platinum Honors ($100K+)</option>
+    <option value="not_enrolled">Not enrolled (base rates)</option>
+    <option value="member">Member (&lt;$30K · +10%)</option>
+    <option value="preferred_plus">Preferred Plus ($30K+ · +25%)</option>
+    <option value="preferred_honors">Preferred Honors ($100K+ · +50%)</option>
+    <option value="premier">Premier ($1M+ · +75%)</option>
+    <option value="legacy_gold_25">Legacy +25% benefit (verify account)</option>
+    <option value="legacy_platinum_50">Legacy +50% benefit (verify account)</option>
+    <option value="legacy_platinum_honors_75">Legacy +75% benefit (verify account)</option>
   </select>
 </div>
 <div class="setting-group">
@@ -134,11 +138,11 @@ h1{font-size:1.3rem;text-align:center;color:#e94560;margin-bottom:2px}
 <hr class="divider">
 <div class="section-title">US Bank Smartly</div>
 <div class="setting-group">
-  <div class="setting-label">Checking Account Balance</div>
+  <div class="setting-label">Qualifying 30-day average balance (Smartly Savings required)</div>
   <select class="setting-select" id="set_smartlyTier">
     <option value="0">Under $10,000 (2%)</option>
-    <option value="1">$10K – $50K (2.5%)</option>
-    <option value="2">$50K – $100K (3%)</option>
+    <option value="1">$10K – $49,999 (2.5%)</option>
+    <option value="2">$50K – $99,999 (3%)</option>
     <option value="3">$100K+ (4%)</option>
   </select>
 </div>
@@ -172,21 +176,26 @@ h1{font-size:1.3rem;text-align:center;color:#e94560;margin-bottom:2px}
 <script>
 /*=====================================================================
   DATA — UPDATE QUARTERLY
-  Last updated: 2026-07-01
+  Last updated: 2026-09-05
 =====================================================================*/
-var DATA_UPDATED = "2026-07-01";
+var DATA_UPDATED = "2026-09-05";
 var CURRENT_QUARTER = "Q3 2026 (Jul\u2013Sep)";
 
 // Discover it — Q3 2026 rotating 5% categories
-var DISCOVER_ROTATING = ["gas", "transit", "travel", "rideshare", "parking", "drugstores"];
+var DISCOVER_ROTATING_MAP = {
+  gas: {note:"Q3 rotating \u00b7 direct gas/EV charging \u00b7 activate \u00b7 $1,500 combined cap"},
+  airlines: {note:"Q3 rotating \u00b7 airlines booked direct \u00b7 activate \u00b7 $1,500 combined cap"},
+  transit: {note:"Q3 rotating \u00b7 eligible bus/rail/ferry \u00b7 activate \u00b7 $1,500 combined cap"},
+  drugstores: {note:"Q3 rotating \u00b7 eligible drugstores \u00b7 activate \u00b7 $1,500 combined cap"},
+};
 
 // Chase Freedom / Freedom Flex — Q3 2026 rotating 5%
 var CHASE_ROTATING_MAP = {
-  gas: {note:"Q3 rotating \u00b7 gas/EV charging \u00b7 $1,500/qtr"},
-  transit: {note:"Q3 rotating \u00b7 public transit \u00b7 $1,500/qtr"},
-  parking: {note:"Q3 rotating \u00b7 transit/tolls/parking \u00b7 $1,500/qtr"},
-  entertainment: {note:"Q3 rotating \u00b7 select live entertainment \u00b7 $1,500/qtr"},
-  united_way: {note:"Q3 rotating \u00b7 United Way donations only \u00b7 $1,500/qtr"},
+  gas: {note:"Q3 \u00b7 gas/EV \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
+  transit: {note:"Q3 \u00b7 public transit \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
+  parking: {note:"Q3 \u00b7 tolls/parking \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
+  entertainment: {note:"Q3 \u00b7 select live entertainment \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
+  united_way: {note:"Q3 \u00b7 United Way only \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
 };
 
 /*=====================================================================
@@ -196,30 +205,44 @@ var CATEGORIES = [
   {id:"dining",      name:"Dining",         icon:"\uD83C\uDF7D\uFE0F", kw:["restaurant","eat","dine","food","takeout","delivery","doordash","grubhub","ubereats"]},
   {id:"fast_food",   name:"Fast Food",      icon:"\uD83C\uDF54",  kw:["mcdonalds","burger","wendys","taco bell","chipotle","chick-fil-a","kfc","subway","popeyes","five guys"]},
   {id:"coffee",      name:"Coffee",         icon:"\u2615",  kw:["starbucks","dunkin","cafe","latte","peets","dutch bros","espresso"]},
-  {id:"groceries",   name:"Groceries",      icon:"\uD83D\uDED2",  kw:["supermarket","grocery","trader joes","kroger","safeway","albertsons","publix","heb","aldi","sprouts"]},
+  {id:"groceries",   name:"Groceries",      icon:"\uD83D\uDED2",  kw:["supermarket","grocery","whole foods","trader joes","kroger","safeway","albertsons","publix","heb","aldi","sprouts"]},
+  {id:"online_groceries", name:"Online Grocery", icon:"\uD83D\uDED2", kw:["instacart","freshdirect","grocery delivery","online grocery"]},
   {id:"wholesale",   name:"Wholesale",      icon:"\uD83C\uDFEA",  kw:["costco","sams club","bjs","bulk","warehouse"]},
   {id:"gas",         name:"Gas",            icon:"\u26FD",  kw:["fuel","gasoline","ev charging","shell","chevron","exxon","bp","electric vehicle","chargepoint"]},
-  {id:"rideshare",   name:"Rideshare",      icon:"\uD83D\uDE95",  kw:["uber","lyft","taxi","cab","ride","rideshare"]},
+  {id:"airlines",    name:"Flights (Direct)", icon:"\u2708\uFE0F", kw:["flight","airline","airfare","delta","united airlines","southwest","american airlines","alaska airlines","jetblue"]},
+  {id:"rideshare",   name:"Uber/Taxi",      icon:"\uD83D\uDE95",  kw:["uber","taxi","cab","rideshare"]},
+  {id:"lyft",        name:"Lyft",           icon:"\uD83D\uDE95",  kw:["lyft"]},
   {id:"transit",     name:"Transit",        icon:"\uD83D\uDE86",  kw:["transit","public transit","train","bus","ferry","subway","metro","light rail","amtrak","sound transit","orca","clipper","omny","commute"]},
-  {id:"travel",      name:"Travel",         icon:"\u2708\uFE0F",  kw:["flight","airline","vacation","booking","airfare","delta","united","southwest","american airlines","expedia","rental car"]},
-  {id:"hotels",      name:"Hotels",         icon:"\uD83C\uDFE8",  kw:["hotel","motel","airbnb","marriott","hilton","lodging","vrbo","hyatt","ihg"]},
-  {id:"amazon",      name:"Amazon",         icon:"\uD83D\uDCE6",  kw:["amazon","prime","whole foods","aws"]},
+  {id:"travel",      name:"Other Travel",   icon:"\u2708\uFE0F",  kw:["expedia","travel agency","rental car","cruise","vacation package"]},
+  {id:"hotels",      name:"Hotels",         icon:"\uD83C\uDFE8",  kw:["hotel","motel","marriott","hilton","lodging","hyatt","ihg"]},
+  {id:"vacation_rentals", name:"Vacation Rentals", icon:"\uD83C\uDFE1", kw:["airbnb","vrbo","plum guide","homeaway","homestay.com","vacasa","vacation home"]},
+  {id:"chase_travel", name:"Chase Travel", icon:"\u2708\uFE0F", kw:["chase travel","chase portal"]},
+  {id:"usbank_travel", name:"U.S. Bank Travel", icon:"\u2708\uFE0F", kw:["us bank travel","u.s. bank travel","travel center","rti travelcenter"]},
+  {id:"amazon",      name:"Amazon",         icon:"\uD83D\uDCE6",  kw:["amazon","prime","aws"]},
   {id:"online_shopping", name:"Online Shop", icon:"\uD83D\uDECD\uFE0F", kw:["online","ebay","etsy","walmart.com","target.com","shopping","wayfair","newegg"]},
   {id:"streaming",   name:"Streaming",      icon:"\uD83D\uDCFA",  kw:["netflix","hulu","disney","spotify","youtube","apple tv","hbo","max","peacock","paramount","music"]},
+  {id:"internet_cable", name:"Internet/Cable", icon:"\uD83C\uDF10", kw:["internet","cable","comcast","xfinity","spectrum","cox","centurylink","ziply"]},
+  {id:"peloton",      name:"Peloton $150+",  icon:"\uD83D\uDEB2", kw:["peloton","peloton equipment","peloton accessories"]},
   {id:"drugstores",  name:"Drugstores",     icon:"\uD83D\uDC8A",  kw:["pharmacy","cvs","walgreens","rite aid","medicine","rx","prescription"]},
   {id:"home_improvement", name:"Home Improv", icon:"\uD83D\uDD28", kw:["lowes","home depot","hardware","renovation","repair","menards","ace"]},
-  {id:"electronics", name:"Electronics",    icon:"\uD83D\uDDA5\uFE0F", kw:["best buy","apple store","tech","computer","phone store","micro center","b&h"]},
+  {id:"electronics", name:"Electronics",    icon:"\uD83D\uDDA5\uFE0F", kw:["best buy","apple store","tech","computer","micro center","b&h"]},
   {id:"cell_phone",  name:"Cell Phone",     icon:"\uD83D\uDCF1",  kw:["phone bill","tmobile","t-mobile","verizon","att","at&t","wireless","mobile","sprint","mint"]},
-  {id:"utilities",   name:"Utilities",      icon:"\uD83D\uDCA1",  kw:["electric","water","power","internet","cable","sewer","garbage","gas bill","pse","comcast","xfinity"]},
-  {id:"gym",         name:"Gym/Fitness",    icon:"\uD83C\uDFCB\uFE0F", kw:["gym","fitness","workout","planet fitness","la fitness","peloton","ymca","crossfit","equinox"]},
-  {id:"entertainment", name:"Entertainment", icon:"\uD83C\uDFAC", kw:["movie","concert","show","theater","amc","regal","tickets","event","live nation","ticketmaster"]},
-  {id:"department",  name:"Dept Stores",    icon:"\uD83C\uDFEC",  kw:["macys","nordstrom","jcpenney","kohls","target","sears","bloomingdales","dillards"]},
-  {id:"clothing",    name:"Clothing",       icon:"\uD83D\uDC55",  kw:["clothes","apparel","gap","old navy","zara","h&m","nike","shoes","adidas","uniqlo","ross","tj maxx"]},
+  {id:"utilities",   name:"Utilities",      icon:"\uD83D\uDCA1",  kw:["electric","water","power","sewer","garbage","trash","waste","gas bill","natural gas","pse"]},
+  {id:"home_security", name:"Home Security", icon:"\uD83D\uDD12", kw:["ring","adt","simplisafe","security system","alarm monitoring"]},
+  {id:"gym",         name:"Gym/Fitness",    icon:"\uD83C\uDFCB\uFE0F", kw:["gym","fitness membership","planet fitness","la fitness","orangetheory","ymca","crossfit","equinox"]},
+  {id:"entertainment", name:"Live Events", icon:"\uD83C\uDFAD", kw:["concert","live theater","live theatre","sports ticket","museum","zoo","aquarium","amusement park","live nation","ticketmaster","broadway"]},
+  {id:"movies",      name:"Movie Theaters", icon:"\uD83C\uDF9F\uFE0F", kw:["movie","cinema","amc","regal","cinemark","fandango","atom tickets"]},
+  {id:"department",  name:"Dept Stores",    icon:"\uD83C\uDFEC",  kw:["macys","nordstrom","jcpenney","kohls","sears","bloomingdales","dillards"]},
+  {id:"clothing",    name:"Select Clothing", icon:"\uD83D\uDC55", kw:["aeropostale","american eagle","ann taylor","banana republic","eddie bauer","express","forever 21","gap","j.crew","jos a bank","old navy","talbots","the limited"]},
   {id:"furniture",   name:"Furniture",      icon:"\uD83D\uDECB\uFE0F", kw:["ikea","furniture","couch","sofa","mattress","bed","wayfair","ashley","crate and barrel","pottery barn"]},
+  {id:"sporting_goods", name:"Sporting Goods", icon:"\u26BD", kw:["dicks sporting goods","bass pro","cabelas","academy sports","rei","sporting goods"]},
   {id:"parking",     name:"Parking/Tolls",  icon:"\uD83C\uDD7F\uFE0F", kw:["parking","toll","meter","garage","spothero","parkwhiz"]},
   {id:"tax",         name:"Tax",            icon:"\uD83C\uDFDB\uFE0F", kw:["tax","irs","income tax","property tax","tax payment","pay1040","eftps","federal tax","state tax"]},
-  {id:"united_way",  name:"United Way",      icon:"\u2764\uFE0F", kw:["united way","charity","donation","donate","nonprofit","non-profit"]},
-  {id:"paypal",      name:"PayPal",         icon:"\uD83D\uDCB2",  kw:["paypal","venmo"]},
+  {id:"insurance",   name:"Insurance",      icon:"\uD83D\uDEE1\uFE0F", kw:["insurance","geico","progressive","state farm","allstate","premium"]},
+  {id:"education",   name:"Education",      icon:"\uD83C\uDF93", kw:["tuition","school","university","college","education"]},
+  {id:"gift_cards",  name:"Gift Cards",     icon:"\uD83C\uDF81", kw:["gift card","prepaid card"]},
+  {id:"united_way",  name:"United Way",     icon:"\u2764\uFE0F", kw:["united way"]},
+  {id:"paypal",      name:"PayPal",         icon:"\uD83D\uDCB2",  kw:["paypal"]},
   {id:"other",       name:"Other",          icon:"\uD83D\uDCB3",  kw:["everything else","miscellaneous","general"]},
 ];
 
@@ -230,30 +253,41 @@ CATEGORIES.forEach(function(c) { CAT_MAP[c.id] = c; });
   US BANK CASH+ 5% OPTIONS
 =====================================================================*/
 var CASHPLUS_5_OPTIONS = [
-  {value:"fast_food",     label:"Fast Food",                 mapCat:"fast_food"},
-  {value:"electronics",   label:"Electronics Stores",        mapCat:"electronics"},
-  {value:"streaming",     label:"TV, Internet & Streaming",  mapCat:"streaming"},
-  {value:"utilities",     label:"Home Utilities",            mapCat:"utilities"},
-  {value:"cell_phone",    label:"Cell Phone Providers",      mapCat:"cell_phone"},
-  {value:"furniture",     label:"Furniture Stores",          mapCat:"furniture"},
-  {value:"department",    label:"Department Stores",         mapCat:"department"},
-  {value:"transportation",label:"Ground Transportation",     mapCat:"rideshare"},
-  {value:"gyms",          label:"Gyms & Fitness",            mapCat:"gym"},
-  {value:"clothing",      label:"Select Clothing Stores",    mapCat:"clothing"},
-  {value:"sporting",      label:"Sporting Goods Stores",     mapCat:"other"},
-  {value:"movies",        label:"Movie Theaters",            mapCat:"entertainment"},
+  {value:"fast_food",     label:"Fast Food",                 mapCats:["fast_food"]},
+  {value:"electronics",   label:"Electronics Stores",        mapCats:["electronics"]},
+  {value:"streaming",     label:"TV, Internet & Streaming",  mapCats:["streaming","internet_cable"]},
+  {value:"utilities",     label:"Home Utilities",            mapCats:["utilities"]},
+  {value:"cell_phone",    label:"Cell Phone Providers",      mapCats:["cell_phone"]},
+  {value:"furniture",     label:"Furniture Stores",          mapCats:["furniture"]},
+  {value:"department",    label:"Department Stores",         mapCats:["department"]},
+  {value:"transportation",label:"Ground Transportation",     mapCats:["transit","rideshare","lyft"]},
+  {value:"gyms",          label:"Gyms & Fitness",            mapCats:["gym"]},
+  {value:"clothing",      label:"Select Clothing Stores",    mapCats:["clothing"]},
+  {value:"sporting",      label:"Sporting Goods Stores",     mapCats:["sporting_goods"]},
+  {value:"movies",        label:"Movie Theaters",            mapCats:["movies"]},
 ];
 
-var BOA_MULTIPLIER = {none:1, gold:1.25, platinum:1.5, platinum_honors:1.75};
+var BOA_REWARD_TIERS = {
+  not_enrolled: {label:"Not enrolled", choice:3, grocery:2, other:1, unlimited:1.5},
+  member: {label:"Member", choice:3.3, grocery:2.2, other:1.1, unlimited:1.65},
+  preferred_plus: {label:"Preferred Plus", choice:3.75, grocery:2.5, other:1.25, unlimited:1.87},
+  preferred_honors: {label:"Preferred Honors", choice:4.5, grocery:3, other:1.5, unlimited:2.25},
+  premier: {label:"Premier", choice:5.25, grocery:3.5, other:1.75, unlimited:2.62},
+  legacy_gold_25: {label:"Legacy +25%", choice:3.75, grocery:2.5, other:1.25, unlimited:1.87},
+  legacy_platinum_50: {label:"Legacy +50%", choice:4.5, grocery:3, other:1.5, unlimited:2.25},
+  legacy_platinum_honors_75: {label:"Legacy +75%", choice:5.25, grocery:3.5, other:1.75, unlimited:2.62},
+};
 var SMARTLY_RATES = [2, 2.5, 3, 4];
 
 /*=====================================================================
   SETTINGS (includes pinned categories)
 =====================================================================*/
-var DEFAULT_PINS = ["dining","groceries","gas","transit","travel","rideshare","amazon","streaming","online_shopping","drugstores","entertainment","coffee","home_improvement","united_way","other"];
+var LEGACY_DEFAULT_PINS = ["dining","groceries","gas","transit","travel","rideshare","amazon","streaming","online_shopping","drugstores","entertainment","coffee","home_improvement","united_way","other"];
+var DEFAULT_PINS = ["dining","groceries","gas","airlines","transit","travel","vacation_rentals","rideshare","lyft","amazon","streaming","internet_cable","online_shopping","drugstores","entertainment","movies","coffee","home_improvement","home_security","united_way","other"];
+var LEGACY_BOA_TIERS = {none:"not_enrolled", gold:"legacy_gold_25", platinum:"legacy_platinum_50", platinum_honors:"legacy_platinum_honors_75"};
 
 var DEFAULT_SETTINGS = {
-  boaTier: "none",
+  boaTier: "not_enrolled",
   boaChoice: "gas",
   smartlyTier: "0",
   cp5a: "streaming",
@@ -266,11 +300,20 @@ function loadSettings() {
   try {
     var s = JSON.parse(localStorage.getItem("cardRewardsSettings"));
     if (s) {
-      if (!s.pinnedCats) s.pinnedCats = DEFAULT_PINS.slice();
-      return Object.assign({}, DEFAULT_SETTINGS, s);
+      var merged = Object.assign({}, DEFAULT_SETTINGS, s);
+      var migrated = false;
+      if (LEGACY_BOA_TIERS[merged.boaTier]) { merged.boaTier = LEGACY_BOA_TIERS[merged.boaTier]; migrated = true; }
+      if (!s.pinnedCats) merged.pinnedCats = DEFAULT_PINS.slice();
+      else if (sameArray(s.pinnedCats, LEGACY_DEFAULT_PINS)) { merged.pinnedCats = DEFAULT_PINS.slice(); migrated = true; }
+      if (migrated) persistSettings(merged);
+      return merged;
     }
   } catch(e) {}
   return Object.assign({}, DEFAULT_SETTINGS, {pinnedCats: DEFAULT_PINS.slice()});
+}
+
+function sameArray(a, b) {
+  return a.length === b.length && a.every(function(value, index) { return value === b[index]; });
 }
 
 function persistSettings(s) {
@@ -283,7 +326,7 @@ var settings = loadSettings();
   CATEGORY GROUPING
 =====================================================================*/
 function effectiveCat(catId) {
-  var map = {fast_food:"dining", coffee:"dining", wholesale:"groceries", rideshare:"travel", hotels:"travel", parking:"travel", amazon:"online_shopping", furniture:"home_improvement"};
+  var map = {fast_food:"dining", coffee:"dining", wholesale:"groceries", online_groceries:"online_shopping", airlines:"travel", rideshare:"travel", lyft:"travel", hotels:"travel", vacation_rentals:"travel", chase_travel:"travel", usbank_travel:"travel", parking:"travel", amazon:"online_shopping", streaming:"online_shopping", internet_cable:"online_shopping", cell_phone:"online_shopping", peloton:"online_shopping", furniture:"home_improvement"};
   return map[catId] || catId;
 }
 
@@ -295,64 +338,73 @@ function getRate(cardId, catId, s) {
 
   switch(cardId) {
     case "discover": {
-      var isR = DISCOVER_ROTATING.includes(catId);
-      return {rate: isR ? 5 : 1, unit:"%", note: isR ? "Q3 rotating \u00b7 gas/transport/drugstores \u00b7 $1,500/qtr cap" : ""};
+      var discoverRot = DISCOVER_ROTATING_MAP[catId];
+      return discoverRot ? {rate:5, unit:"%", note:discoverRot.note} : {rate:1, unit:"%", note:""};
     }
     case "chase_freedom": {
       var rot = CHASE_ROTATING_MAP[catId];
       if (rot) return {rate:5, unit:"%", note:rot.note};
+      if (catId === "lyft") return {rate:2, unit:"%", note:"Lyft through Sep 2027"};
       return {rate:1, unit:"%", note:""};
     }
     case "chase_freedom_flex": {
       var rot2 = CHASE_ROTATING_MAP[catId];
       if (rot2) return {rate:5, unit:"%", note:rot2.note};
+      if (catId === "chase_travel") return {rate:5, unit:"%", note:"Booked through Chase Travel"};
       if (eCat === "dining") return {rate:3, unit:"%", note:""};
       if (catId === "drugstores") return {rate:3, unit:"%", note:""};
+      if (catId === "lyft") return {rate:2, unit:"%", note:"Lyft through Sep 2027"};
       return {rate:1, unit:"%", note:""};
     }
     case "chase_sapphire": {
-      if (catId === "rideshare") return {rate:5, unit:"x pts", note:"Lyft 5x (thru 9/2027) \u00b7 Uber ~2x"};
+      if (catId === "chase_travel") return {rate:5, unit:"x pts", note:"Booked through Chase Travel"};
+      if (catId === "lyft") return {rate:5, unit:"x pts", note:"Lyft through Sep 2027"};
+      if (catId === "gas") return {rate:3, unit:"x pts", note:"Gas and EV charging"};
+      if (catId === "vacation_rentals") return {rate:3, unit:"x pts", note:"Select brands booked direct"};
+      if (catId === "peloton") return {rate:5, unit:"x pts", note:"Equipment/accessories over $150 through Dec 2027"};
       if (eCat === "dining") return {rate:3, unit:"x pts", note:""};
       if (catId === "streaming") return {rate:3, unit:"x pts", note:""};
-      if (catId === "groceries") return {rate:3, unit:"x pts", note:"Online grocery only"};
-      if (eCat === "travel") return {rate:2, unit:"x pts", note:"5x via Chase Travel portal"};
+      if (catId === "online_groceries") return {rate:3, unit:"x pts", note:"Online grocery"};
+      if (eCat === "travel") return {rate:2, unit:"x pts", note:"Other eligible travel"};
       return {rate:1, unit:"x pts", note:""};
     }
     case "boa_customized": {
-      var m = BOA_MULTIPLIER[s.boaTier];
-      var base = 1;
-      if (catId === s.boaChoice || eCat === s.boaChoice) base = 3;
-      else if (catId === "groceries" || catId === "wholesale") base = 2;
-      var rate = Math.round(base * m * 100) / 100;
-      var note = s.boaTier !== "none" ? s.boaTier.replace(/_/g," ") + " tier" : "";
-      if (base >= 2) note += (note ? " \u00b7 " : "") + "$2,500/qtr cap";
-      return {rate:rate, unit:"%", note:note};
+      var boaTier = BOA_REWARD_TIERS[s.boaTier];
+      var rewardType = "other";
+      if (catId === s.boaChoice || eCat === s.boaChoice) rewardType = "choice";
+      else if (catId === "groceries" || catId === "online_groceries" || catId === "wholesale") rewardType = "grocery";
+      var boaNote = s.boaTier === "not_enrolled" ? "" : boaTier.label + " tier";
+      if (rewardType !== "other") boaNote += (boaNote ? " \u00b7 " : "") + "$2,500 combined/qtr cap";
+      return {rate:boaTier[rewardType], unit:"%", note:boaNote};
     }
     case "boa_unlimited": {
-      var m2 = BOA_MULTIPLIER[s.boaTier];
-      var r = Math.round(1.5 * m2 * 100) / 100;
-      return {rate:r, unit:"%", note: s.boaTier !== "none" ? s.boaTier.replace(/_/g," ") + " tier" : ""};
+      var boaUnlimitedTier = BOA_REWARD_TIERS[s.boaTier];
+      return {rate:boaUnlimitedTier.unlimited, unit:"%", note:s.boaTier === "not_enrolled" ? "" : boaUnlimitedTier.label + " tier"};
     }
     case "usb_smartly": {
       var rate2 = SMARTLY_RATES[parseInt(s.smartlyTier)];
-      if (catId === "tax") return {rate:2, unit:"%", note:"Tax excluded from bonus rate"};
-      return {rate:rate2, unit:"%", note: rate2 > 2 ? "$10K/cycle cap at bonus rate" : ""};
+      if (catId === "usbank_travel") return {rate:6, unit:"%", note:"Prepaid hotel/car through Travel Center"};
+      if (["tax","insurance","education","gift_cards"].includes(catId)) return {rate:2, unit:"%", note:"Excluded from Smartly bonus rate"};
+      return {rate:rate2, unit:"%", note:rate2 > 2 ? "$10K billing-cycle cap at bonus rate" : ""};
     }
     case "usb_cashplus": {
+      if (catId === "usbank_travel") return {rate:5, unit:"%", note:"Air/hotel/car through Travel Center"};
       var o5a = CASHPLUS_5_OPTIONS.find(function(o){return o.value===s.cp5a;});
       var o5b = CASHPLUS_5_OPTIONS.find(function(o){return o.value===s.cp5b;});
       var rt = 1, nt = "";
-      if (o5a && o5a.mapCat === catId) { rt = 5; nt = "$2,000/qtr cap"; }
-      if (o5b && o5b.mapCat === catId && rt < 5) { rt = 5; nt = "$2,000/qtr cap"; }
+      if (o5a && o5a.mapCats.includes(catId)) { rt = 5; nt = "Selected/enrolled \u00b7 $2,000 combined/qtr cap"; }
+      if (o5b && o5b.mapCats.includes(catId) && rt < 5) { rt = 5; nt = "Selected/enrolled \u00b7 $2,000 combined/qtr cap"; }
       if (rt < 5) {
         var cp2 = s.cp2;
         if (cp2 === catId) rt = 2;
-        else if (cp2 === "dining" && (catId==="dining"||catId==="fast_food"||catId==="coffee")) rt = 2;
+        else if (cp2 === "groceries" && (catId === "groceries" || catId === "online_groceries")) rt = 2;
+        else if (cp2 === "dining" && (catId === "dining" || catId === "coffee")) rt = 2;
+        if (rt === 2) nt = "Selected 2% category \u00b7 no cap";
       }
       return {rate:rt, unit:"%", note:nt};
     }
     case "paypal": {
-      return catId === "paypal" ? {rate:3, unit:"%", note:"Via PayPal checkout"} : {rate:2, unit:"%", note:""};
+      return catId === "paypal" ? {rate:3, unit:"%", note:"Eligible PayPal checkout"} : {rate:1.5, unit:"%", note:""};
     }
     default: return {rate:0, unit:"%", note:""};
   }
