@@ -176,26 +176,30 @@ h1{font-size:1.3rem;text-align:center;color:#e94560;margin-bottom:2px}
 <script>
 /*=====================================================================
   DATA — UPDATE QUARTERLY
-  Last updated: 2026-09-05
+  Last updated: 2026-10-23
 =====================================================================*/
-var DATA_UPDATED = "2026-09-05";
-var CURRENT_QUARTER = "Q3 2026 (Jul\u2013Sep)";
+var DATA_UPDATED = "2026-10-23";
+var CURRENT_QUARTER = "Q4 2026 (Oct\u2013Dec)";
 
-// Discover it — Q3 2026 rotating 5% categories
+// Discover it — Q4 2026 rotating 5% categories
 var DISCOVER_ROTATING_MAP = {
-  gas: {note:"Q3 rotating \u00b7 direct gas/EV charging \u00b7 activate \u00b7 $1,500 combined cap"},
-  airlines: {note:"Q3 rotating \u00b7 airlines booked direct \u00b7 activate \u00b7 $1,500 combined cap"},
-  transit: {note:"Q3 rotating \u00b7 eligible bus/rail/ferry \u00b7 activate \u00b7 $1,500 combined cap"},
-  drugstores: {note:"Q3 rotating \u00b7 eligible drugstores \u00b7 activate \u00b7 $1,500 combined cap"},
+  dining: {note:"Q4 rotating \u00b7 restaurants incl. takeout/delivery \u00b7 activate \u00b7 $1,500 combined cap"},
+  fast_food: {note:"Q4 rotating \u00b7 fast food \u00b7 activate \u00b7 $1,500 combined cap"},
+  coffee: {note:"Q4 rotating \u00b7 cafes \u00b7 activate \u00b7 $1,500 combined cap"},
+  entertainment: {note:"Q4 rotating \u00b7 concert/sports/theater tickets, zoos, parks \u00b7 activate \u00b7 $1,500 combined cap"},
+  movies: {note:"Q4 rotating \u00b7 movie theater tickets \u00b7 activate \u00b7 $1,500 combined cap"},
+  utilities: {note:"Q4 rotating \u00b7 electric/natural gas/water \u00b7 activate \u00b7 $1,500 combined cap"},
+  internet_cable: {note:"Q4 rotating \u00b7 internet/cable paid online or by phone \u00b7 activate \u00b7 $1,500 combined cap"},
+  cell_phone: {note:"Q4 rotating \u00b7 phone bill paid online or by phone \u00b7 activate \u00b7 $1,500 combined cap"},
 };
 
-// Chase Freedom / Freedom Flex — Q3 2026 rotating 5%
+// Chase Freedom / Freedom Flex — Q4 2026 rotating 5%
 var CHASE_ROTATING_MAP = {
-  gas: {note:"Q3 \u00b7 gas/EV \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
-  transit: {note:"Q3 \u00b7 public transit \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
-  parking: {note:"Q3 \u00b7 tolls/parking \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
-  entertainment: {note:"Q3 \u00b7 select live entertainment \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
-  united_way: {note:"Q3 \u00b7 United Way only \u00b7 activate by Sep 14 \u00b7 $1,500 combined cap"},
+  groceries: {note:"Q4 \u00b7 grocery stores, not Walmart/Target \u00b7 activate by Dec 14 \u00b7 $1,500 combined cap"},
+  dining: {note:"Q4 \u00b7 dining incl. takeout/delivery \u00b7 activate by Dec 14 \u00b7 $1,500 combined cap"},
+  fast_food: {note:"Q4 \u00b7 dining \u00b7 activate by Dec 14 \u00b7 $1,500 combined cap"},
+  coffee: {note:"Q4 \u00b7 dining \u00b7 activate by Dec 14 \u00b7 $1,500 combined cap"},
+  red_cross: {note:"Q4 \u00b7 American Red Cross direct donations \u00b7 activate by Dec 14 \u00b7 $1,500 combined cap"},
 };
 
 /*=====================================================================
@@ -242,6 +246,7 @@ var CATEGORIES = [
   {id:"education",   name:"Education",      icon:"\uD83C\uDF93", kw:["tuition","school","university","college","education"]},
   {id:"gift_cards",  name:"Gift Cards",     icon:"\uD83C\uDF81", kw:["gift card","prepaid card"]},
   {id:"united_way",  name:"United Way",     icon:"\u2764\uFE0F", kw:["united way"]},
+  {id:"red_cross",   name:"Red Cross",      icon:"\u2764\uFE0F", kw:["red cross","american red cross"]},
   {id:"paypal",      name:"PayPal",         icon:"\uD83D\uDCB2",  kw:["paypal"]},
   {id:"other",       name:"Other",          icon:"\uD83D\uDCB3",  kw:["everything else","miscellaneous","general"]},
 ];
@@ -283,8 +288,12 @@ var SMARTLY_RATES = [2, 2.5, 3, 4];
   SETTINGS (includes pinned categories)
 =====================================================================*/
 var LEGACY_DEFAULT_PINS = ["dining","groceries","gas","transit","travel","rideshare","amazon","streaming","online_shopping","drugstores","entertainment","coffee","home_improvement","united_way","other"];
-var DEFAULT_PINS = ["dining","groceries","gas","airlines","transit","travel","vacation_rentals","rideshare","lyft","amazon","streaming","internet_cable","online_shopping","drugstores","entertainment","movies","coffee","home_improvement","home_security","united_way","other"];
+var DEFAULT_PINS = ["dining","groceries","gas","airlines","transit","travel","vacation_rentals","rideshare","lyft","amazon","streaming","internet_cable","online_shopping","drugstores","entertainment","movies","coffee","home_improvement","home_security","utilities","cell_phone","red_cross","other"];
 var LEGACY_BOA_TIERS = {none:"not_enrolled", gold:"legacy_gold_25", platinum:"legacy_platinum_50", platinum_honors:"legacy_platinum_honors_75"};
+// One-time change to saved pins; set a new PIN_UPDATE id to apply another
+var PIN_UPDATE = "2026-Q4";
+var PIN_UPDATE_REMOVE = ["united_way"];
+var PIN_UPDATE_ADD = ["utilities","cell_phone","red_cross"];
 
 var DEFAULT_SETTINGS = {
   boaTier: "not_enrolled",
@@ -294,6 +303,7 @@ var DEFAULT_SETTINGS = {
   cp5b: "utilities",
   cp2: "groceries",
   pinnedCats: DEFAULT_PINS.slice(),
+  pinUpdate: PIN_UPDATE,
 };
 
 function loadSettings() {
@@ -305,6 +315,7 @@ function loadSettings() {
       if (LEGACY_BOA_TIERS[merged.boaTier]) { merged.boaTier = LEGACY_BOA_TIERS[merged.boaTier]; migrated = true; }
       if (!s.pinnedCats) merged.pinnedCats = DEFAULT_PINS.slice();
       else if (sameArray(s.pinnedCats, LEGACY_DEFAULT_PINS)) { merged.pinnedCats = DEFAULT_PINS.slice(); migrated = true; }
+      if (s.pinUpdate !== PIN_UPDATE) { merged.pinnedCats = applyPinUpdate(merged.pinnedCats); merged.pinUpdate = PIN_UPDATE; migrated = true; }
       if (migrated) persistSettings(merged);
       return merged;
     }
@@ -314,6 +325,13 @@ function loadSettings() {
 
 function sameArray(a, b) {
   return a.length === b.length && a.every(function(value, index) { return value === b[index]; });
+}
+
+function applyPinUpdate(pins) {
+  var kept = pins.filter(function(id) { return PIN_UPDATE_REMOVE.indexOf(id) === -1; });
+  var added = PIN_UPDATE_ADD.filter(function(id) { return kept.indexOf(id) === -1; });
+  var at = kept.indexOf("other") === -1 ? kept.length : kept.indexOf("other");
+  return kept.slice(0, at).concat(added, kept.slice(at));
 }
 
 function persistSettings(s) {
@@ -349,7 +367,7 @@ function getRate(cardId, catId, s) {
     }
     case "chase_freedom_flex": {
       var rot2 = CHASE_ROTATING_MAP[catId];
-      if (rot2) return {rate:5, unit:"%", note:rot2.note};
+      if (rot2) return eCat === "dining" ? {rate:7, unit:"%", note:"5% rotating + 2% dining \u00b7 " + rot2.note} : {rate:5, unit:"%", note:rot2.note};
       if (catId === "chase_travel") return {rate:5, unit:"%", note:"Booked through Chase Travel"};
       if (eCat === "dining") return {rate:3, unit:"%", note:""};
       if (catId === "drugstores") return {rate:3, unit:"%", note:""};
